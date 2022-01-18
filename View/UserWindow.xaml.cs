@@ -352,13 +352,32 @@ namespace WallFinishByCategory_v1.View
                                 {
 
                                     List<PlanarFace> planars = GetWallOpeningPlanarFaces(roomWallToJoin, elId);
-                                    List<XYZ> xYZs = planars.Select(x => x.Origin).ToList();
-                                    List<XYZ> twoPoints = GetTwoPoints(xYZs);
-
-
-                                    
-
-                                    Opening opening = _docNow.Create.NewOpening(newWall, twoPoints[0], twoPoints[1]);
+                                    List<XYZ> points = new List<XYZ>();
+                                    List<XYZ> points2 = new List<XYZ>();
+                                    foreach (PlanarFace face in planars)
+                                    {
+                                        EdgeArrayArray edgeArrayArray = ((Face)face).EdgeLoops;
+                                        foreach (EdgeArray edgeArray in edgeArrayArray)
+                                        {
+                                            foreach (Edge edge in edgeArray)
+                                            {
+                                                foreach (XYZ xYZ in edge.Tessellate())
+                                                {
+                                                    points2.Add(xYZ);
+                                                    if (points.Where(x => x.X == xYZ.X 
+                                                                        && x.Y == xYZ.Y
+                                                                        && x.Z == xYZ.Z).Count() == 0)
+                                                        points.Add(xYZ);
+                                                }
+                                            }
+                                        }
+                                    }
+                                    List<XYZ> twoPoints = GetTwoPointsWithMaxDistance(points, _docNow);
+                                    try
+                                    {
+                                        Opening opening = _docNow.Create.NewOpening(newWall, twoPoints[0], twoPoints[1]);
+                                    }
+                                    catch { }
 
                                     FailureHandlingOptions failOpt = t.GetFailureHandlingOptions();
                                     failOpt.SetFailuresPreprocessor(new RoomWarningSwallower());
@@ -592,11 +611,30 @@ namespace WallFinishByCategory_v1.View
                     }
                 }
             }
+
+
             return faceList;
 
 
+
+            //List<XYZ> points = new List<XYZ>();
+            //foreach (Solid solid in solidList)
+            //{
+            //    foreach (Edge edge in solid.Edges)
+            //    {
+            //        foreach (XYZ xYZ in edge.Tessellate())
+            //        {
+            //            points.Add(xYZ);
+            //        }
+            //    }
+
+
+            //}
+            //return points;
+
+
         }
-        static List<XYZ> GetTwoPoints(List<XYZ> xYZs)
+        static List<XYZ> GetTwoPointsWithMaxDistance(List<XYZ> xYZs,Document document)
         {
             double length = 0;
             XYZ one = new XYZ();
@@ -608,7 +646,6 @@ namespace WallFinishByCategory_v1.View
                 xYZsnew.Remove(xYZ);
                 foreach (var xYZ2 in xYZsnew)
                 {
-
                     if (xYZ.DistanceTo(xYZ2) > length)
                     {
                         length = xYZ.DistanceTo(xYZ2);

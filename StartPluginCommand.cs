@@ -26,7 +26,7 @@ namespace WallFinishByCategory_v1
 
             foreach (Document linkedDoc in uiapp.Application.Documents)
             {
-                if (linkedDoc.Title == "RevitCreateList")
+                if (linkedDoc.Title == "Отделка_геометрия в модели АИ")
                 {
                     doc = linkedDoc;
                 }
